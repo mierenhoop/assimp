@@ -851,6 +851,11 @@ ADD_ASSIMP_IMPORTER( MMD
   AssetLib/MMD/MMDVmdParser.h
 )
 
+ADD_ASSIMP_IMPORTER( PRM
+  AssetLib/RV/PRMLoader.cpp
+  AssetLib/RV/PRMLoader.h
+)
+
 # Workaround for issue #2406 - force problematic large file to be optimized to prevent string table overflow error
 # Used -Os instead of -O2 as previous issues had mentioned, since -Os is roughly speaking -O2, excluding any
 # optimizations that take up extra space. Given that the issue is a string table overflowing, -Os seemed appropriate
