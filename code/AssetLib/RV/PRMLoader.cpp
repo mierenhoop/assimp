@@ -12,7 +12,7 @@
 
 using namespace Assimp;
 
-static const aiImporterDesc desc = {
+static const aiImporterDesc prm_desc = {
 	"PRM Importer",
 	"",
 	"",
@@ -33,29 +33,18 @@ bool PRMImporter::CanRead(const std::string& pFile, IOSystem* pIOHandler, bool c
 }
 
 const aiImporterDesc* PRMImporter::GetInfo() const {
-	return &desc;
+	return &prm_desc;
 }
 
-void PRMImporter::InternReadFile(const std::string& pFile, aiScene *pScene, IOSystem *pIOHandler) {
-	StreamReaderLE stream(pIOHandler->Open(pFile, "rb"));
+aiVector3D getVector3D(StreamReaderLE& stream) {
+	aiVector3D vector;
+	vector.x = stream.GetF4();
+	vector.y = stream.GetF4();
+	vector.z = stream.GetF4();
+	return vector;
+}
 
-	auto getVector3D = [&] {
-		aiVector3D vector;
-		vector.x = stream.GetF4();
-		vector.y = stream.GetF4();
-		vector.z = stream.GetF4();
-		return vector;
-	};
-
-	aiNode *root = pScene->mRootNode = new aiNode();
-	root->mName.Set("<PRMROOT>");
-
-	pScene->mMeshes = new aiMesh *[pScene->mNumMeshes = 1];
-	aiMesh *mesh = pScene->mMeshes[0] = new aiMesh();
-
-	root->mMeshes = new unsigned int[root->mNumMeshes = 1];
-	root->mMeshes[0] = 0;
-
+void readMesh(StreamReaderLE& stream, aiMesh *mesh) {
 	mesh->mNumFaces = static_cast<unsigned int>(stream.GetU2());
 	mesh->mNumVertices = static_cast<unsigned int>(stream.GetU2());
 
@@ -73,7 +62,6 @@ void PRMImporter::InternReadFile(const std::string& pFile, aiScene *pScene, IOSy
 		face.mIndices = new unsigned int[4];
 		for (unsigned int j = 0; j < 4; j++) {
 			face.mIndices[j] = stream.GetU2();
-			printf("%d ", face.mIndices[j]);
 		}
 		for (unsigned int j = 0; j < 4; j++) {
 			aiColor4D color;
@@ -96,8 +84,70 @@ void PRMImporter::InternReadFile(const std::string& pFile, aiScene *pScene, IOSy
 	}
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-		mesh->mVertices[i] = getVector3D();
-		mesh->mNormals[i] = getVector3D();
+		mesh->mVertices[i] = getVector3D(stream);
+		mesh->mNormals[i] = getVector3D(stream);
+	}
+
+}
+
+void PRMImporter::InternReadFile(const std::string& pFile, aiScene *pScene, IOSystem *pIOHandler) {
+	StreamReaderLE stream(pIOHandler->Open(pFile, "rb"));
+
+	aiNode *root = pScene->mRootNode = new aiNode();
+	root->mName.Set("<PRMROOT>");
+
+	pScene->mMeshes = new aiMesh *[pScene->mNumMeshes = 1];
+	aiMesh *mesh = pScene->mMeshes[0] = new aiMesh();
+
+	root->mMeshes = new unsigned int[root->mNumMeshes = 1];
+	root->mMeshes[0] = 0;
+
+	readMesh(stream, mesh);
+}
+
+static const aiImporterDesc rvw_desc = {
+	"World Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportBinaryFlavour,
+	0,
+	0,
+	0,
+	0,
+	"w"
+};
+
+RVWImporter::RVWImporter() {}
+RVWImporter::~RVWImporter() {}
+
+bool RVWImporter::CanRead(const std::string& pFile, IOSystem* pIOHandler, bool checkSig) const {
+	return SimpleExtensionCheck(pFile, "w");
+}
+
+const aiImporterDesc* RVWImporter::GetInfo() const {
+	return &rvw_desc;
+}
+
+void RVWImporter::InternReadFile(const std::string& pFile, aiScene *pScene, IOSystem *pIOHandler) {
+	StreamReaderLE stream(pIOHandler->Open(pFile, "rb"));
+
+	aiNode *root = pScene->mRootNode = new aiNode();
+	root->mName.Set("<RVWROOT>");
+
+	pScene->mNumMeshes = static_cast<unsigned int>(stream.GetU4());
+
+	pScene->mMeshes = new aiMesh *[pScene->mNumMeshes];
+	root->mMeshes = new unsigned int[root->mNumMeshes = pScene->mNumMeshes];
+
+	for (unsigned int i = 0; i < pScene->mNumMeshes; i++) {
+		aiMesh *mesh = pScene->mMeshes[i] = new aiMesh();
+		root->mMeshes[i] = i;
+
+		stream.IncPtr(12);
+		stream.IncPtr(4);
+		stream.IncPtr(24);
+		readMesh(stream, mesh);
 	}
 }
 

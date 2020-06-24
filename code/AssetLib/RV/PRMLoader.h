@@ -21,6 +21,20 @@ protected:
 	void InternReadFile(const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler);
 };
 
+class RVWImporter : public BaseImporter {
+public:
+	RVWImporter();
+	~RVWImporter();
+
+public:
+	bool CanRead(const std::string& pFile, IOSystem* pIOHandler, bool checkSig) const;
+
+protected:
+	const aiImporterDesc* GetInfo() const;
+
+	void InternReadFile(const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler);
+};
+
 }
 
 #endif

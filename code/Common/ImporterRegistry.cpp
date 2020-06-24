@@ -360,6 +360,7 @@ void GetImporterInstanceList(std::vector<BaseImporter *> &out) {
 #endif
 #ifndef ASSIMP_BUILD_NO_PRM_IMPORTER
     out.push_back(new PRMImporter());
+    out.push_back(new RVWImporter());
 #endif
     //#ifndef ASSIMP_BUILD_NO_STEP_IMPORTER
     //    out.push_back(new StepFile::StepFileImporter());
